@@ -1,6 +1,6 @@
 function acnePredictionGUI()
     % Create a figure for the GUI
-    hFig = figure('Name', 'Acne Prediction GUI', 'Position', [100, 100, 1000, 700], 'Color', [0.9 0.9 0.9]);
+    hFig = figure('Name', 'Acne Prediction GUI', 'Position', [100, 100, 1400, 700], 'Color', [0.9 0.9 0.9]);
     
     % Panel for input image
     hPanelInput = uipanel('Title', 'Input Image', 'FontSize', 12, ...
@@ -11,14 +11,20 @@ function acnePredictionGUI()
     % Panel for HSV scatter plot
     hPanelHSV = uipanel('Title', 'HSV Scatter Plot', 'FontSize', 12, ...
                         'BackgroundColor', 'white', ...
-                        'Position', [0.55 0.55 0.4 0.4]);
+                        'Position', [0.5 0.55 0.25 0.4]);
     hAxesHSV = axes('Parent', hPanelHSV, 'Position', [0.1, 0.1, 0.8, 0.8]);
+    
+    % Panel for HSV image with highlighted acne areas
+    hPanelHSVImage = uipanel('Title', 'HSV Image', 'FontSize', 12, ...
+                             'BackgroundColor', 'white', ...
+                             'Position', [0.75 0.55 0.2 0.4]);
+    hAxesHSVImage = axes('Parent', hPanelHSVImage, 'Position', [0.1, 0.1, 0.8, 0.8]);
     
     % Panel for GLCM features
     hPanelGLCM = uipanel('Title', 'GLCM Features', 'FontSize', 12, ...
                          'BackgroundColor', 'white', ...
                          'Position', [0.55 0.05 0.4 0.4]);
-    hTableGLCM = uitable('Parent', hPanelGLCM, 'Position', [20, 20, 350, 200], ...
+    hTableGLCM = uitable('Parent', hPanelGLCM, 'Position', [20, 20, 350, 150], ...
                          'ColumnName', {'0°', '45°', '90°', '135°'}, ...
                          'RowName', {'Contrast', 'Correlation', 'Energy', 'Homogeneity'});
     
@@ -29,15 +35,15 @@ function acnePredictionGUI()
     hTextProbabilities = uicontrol('Style', 'text', 'Parent', hPanelProbs, 'Position', [10, 10, 300, 250], ...
                                    'HorizontalAlignment', 'left', 'FontSize', 12, ...
                                    'BackgroundColor', 'white', 'FontName', 'Arial');
-    
+
     % Button to input image
     uicontrol('Style', 'pushbutton', 'String', 'Input Image', ...
-              'Position', [450, 650, 100, 30], 'Callback', @inputImageCallback);
+              'Position', [600, 650, 100, 30], 'Callback', @inputImageCallback);
           
     function inputImageCallback(~, ~)
         % Load the trained models
-        modelFilePath = 'C:\Users\HP\Documents\Semester 6\PCDKNNS\PCD_Acne_Detection_KNN\knnMultiLabelModels.mat';
-        csvFilePath = 'C:\Users\HP\Documents\Semester 6\PCDKNNS\PCD_Acne_Detection_KNN\train\_classes.csv';
+        modelFilePath = '/Users/putragandadewata/Desktop/PCD_20Jun/acne4/knnMultiLabelModels.mat'; % Adjust path accordingly
+        csvFilePath = '/Users/putragandadewata/Desktop/PCD_20Jun/acne4/train/_classes.csv'; % Adjust path accordingly
         load(modelFilePath, 'binaryModels', 'classNames');
         
         % Input image file
@@ -79,7 +85,6 @@ function acnePredictionGUI()
         for i = 1:length(classNames)
             probText = [probText, sprintf('\n %s: %.2f%% ', classNames{sortedIdx(i)}, sortedProbs(i) * 100)];
         end
-        probText = [probText];
         set(hTextProbabilities, 'String', probText);
         
         % Display HSV scatter plot
@@ -94,10 +99,10 @@ function acnePredictionGUI()
         glcmTableData = num2cell(reshape(glcmFeatures, 4, 4)');
         set(hTableGLCM, 'Data', glcmTableData);
         
-        % Show the image with highlighted acne areas (for simplicity, using the input image)
-        % In a real scenario, image processing techniques can be applied to highlight acne areas
-        imshow(img, 'Parent', hAxesImage);
-        title(hAxesImage, 'Highlighted Acne Areas');
+        % Display HSV image with highlighted acne areas
+        hsvImage = highlightAcneAreas(img);
+        imshow(hsvImage, 'Parent', hAxesHSVImage);
+        title(hAxesHSVImage, 'HSV Image with Highlighted Acne Areas');
     end
 end
 
@@ -142,4 +147,36 @@ function [h, s, v] = extractHSVValues(img)
     h = reshape(hsvImg(:,:,1), [], 1);
     s = reshape(hsvImg(:,:,2), [], 1);
     v = reshape(hsvImg(:,:,3), [], 1);
+end
+
+function hsvImage = highlightAcneAreas(img)
+    % Convert image to HSV
+    hsvImg = rgb2hsv(img);
+    
+    % Define thresholds for highlighting acne areas
+    hueThresh = [0, 0.1]; % Example values, adjust based on your criteria
+    saturationThresh = [0.6, 1]; % Example values, adjust based on your criteria
+    valueThresh = [0.4, 1]; % Example values, adjust based on your criteria
+    
+    % Create a mask for acne areas based on HSV thresholds
+    acneMask = (hsvImg(:,:,1) >= hueThresh(1) & hsvImg(:,:,1) <= hueThresh(2)) & ...
+               (hsvImg(:,:,2) >= saturationThresh(1) & hsvImg(:,:,2) <= saturationThresh(2)) & ...
+               (hsvImg(:,:,3) >= valueThresh(1) & hsvImg(:,:,3) <= valueThresh(2));
+    
+    % Convert back to RGB to highlight
+    rgbImg = hsv2rgb(hsvImg);
+    
+    % Invert colors in the masked area
+    invertedRGBImg = rgbImg;
+    invertedRGBImg(:,:,1) = 1 - invertedRGBImg(:,:,1); % Invert Red channel
+    invertedRGBImg(:,:,2) = 1 - invertedRGBImg(:,:,2); % Invert Green channel
+    invertedRGBImg(:,:,3) = 1 - invertedRGBImg(:,:,3); % Invert Blue channel
+    
+    % Apply the inverted colors to the acne areas
+    for channel = 1:3
+        rgbImg(:,:,channel) = rgbImg(:,:,channel) .* ~acneMask + invertedRGBImg(:,:,channel) .* acneMask;
+    end
+    
+    % Convert to HSV image for display
+    hsvImage = rgb2hsv(rgbImg);
 end
