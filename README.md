@@ -20,7 +20,7 @@ https://universe.roboflow.com/university-of-sri-jayewardenepura-srk7m/acne-datas
 ## Cara Menjalankan Program
 - **IMPORTANT STEPS :** <br>
   Sebelum run gui.m, buka gui.m dengan MATLAB atau text editor apapun dan sesuaikan terlebih dahulu path modelFilePath dan csvFilePath dengan path lokal di komputer anda.<br>
-  **Untuk modelFilePath** = Copy path file knnMultiLabelModels.mat yang sudah diekstrak dari repo ini
+  **Untuk modelFilePath** = Copy path file knnMultiLabelModels.mat yang sudah diekstrak dari repo ini <br>
   **Untuk csvFilePath** = Copy path file _classes.csv dari folder **train** yang sudah diekstrak dari repo ini
 
 1. Jalankan gui.m <br>
